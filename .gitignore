@@ -6,3 +6,4 @@ Constants.py
 *.python-version
 *.env
 temp.py
+raw_news.json

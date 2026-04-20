@@ -7,3 +7,4 @@ Constants.py
 *.env
 temp.py
 raw_news.json
+node_modules

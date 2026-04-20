@@ -1,2 +1,5 @@
 pyspark==4.1.1
 confluent-kafka
+flask
+flask-cors
+pymongo

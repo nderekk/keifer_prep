@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Viewer</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .article-card { 
+            background: white; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+        h2 { margin-top: 0; color: #333; }
+        .tag { background: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Demo Articles</h1>
+        <div id="articles-list">Loading articles...</div>
+    </div>
+
+    <script>
+        async function fetchArticles() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/articles');
+                const articles = await response.json();
+                const list = document.getElementById('articles-list');
+                
+                list.innerHTML = articles.map(art => `
+                    <div class="article-card">
+                        <h2>${art.title || 'Untitled'}</h2>
+                        <p>${art.content || 'No content available.'}</p>
+                        <span class="tag">${art.category || 'General'}</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('articles-list').innerText = "Error loading articles.";
+                console.error(err);
+            }
+        }
+        fetchArticles();
+    </script>
+</body>
+</html>

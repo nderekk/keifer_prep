@@ -6,24 +6,29 @@ import os
 
 # 1. Initialize the Enterprise Connection
 # The SDK automatically finds the credentials you just created in the terminal!
-vertexai.init(project=os.getenv("GOOGLE_CLOUD_PROJECT"), location="europe-west4")
+vertexai.init(project=os.getenv("project_key"), location="europe-west4")
 
 # 2. Your Master Prompt (Insert your Taxonomy from Hour 1 here)
 system_prompt = """
-You are an expert political data scientist analyzing Greek digital media. Read the provided Greek news article and extract the sentiment, ideological leaning, establishment stance, and the primary logical fallacy present (if any).
+You are an expert political data scientist analyzing Greek digital media. Read the provided Greek news article and extract the political ideological leaning of the text on a continuous numerical scale from 0.0 to 1.0.
 
-DEFINITIONS & ALLOWED VALUES:
-- "sentiment": ONLY use "positive", "negative", or "neutral". (Based on the author's tone toward the subject).
-- "ideological_leaning": ONLY use "far-left", "left", "center-left", "center", "center-right", "right", "far-right", or "neutral".
-- "establishment_stance": ONLY use "pro-government", "anti-government", "systemic", "anti-systemic", or "neutral".
-- "primary_fallacy": Choose the ONE most dominant fallacy from this exact list. If none exist, output "none".
-  ALLOWED FALLACIES: ["Επίθεση στο Πρόσωπο", "Επιχείρημα του 'Και για το άλλο;'", "Αχυράνθρωπος", "Ψευδές Δίλημμα", "Ολισθηρή Πλαγιά", "Επίκληση στον Φόβο", "Επιλεκτική Χρήση Στοιχείων", "Επίκληση στην Αυθεντία", "Σφάλμα Αιτιότητας", "Βιαστική Γενίκευση", "Επίκληση στην Πλειοψηφία", "Παγιδευμένη Ερώτηση", "Αντιπερισπασμός", "Κανένας αληθινός...", "Φαύλος Κύκλος", "Ανεκδοτολογική Μαρτυρία", "Επίκληση στην Παράδοση", "Ψευδής Αναλογία", "Επίκληση στην Άγνοια", "Φαινόμενο του Φωτοστέφανου", "none"]
+DEFINITIONS & EXPLICIT ANCHORS:
+- 0.00 to 0.15: Far-Left
+- 0.16 to 0.35: Left
+- 0.36 to 0.45: Center-Left
+- 0.46 to 0.55: Center (or strictly Neutral/Objective reporting)
+- 0.56 to 0.65: Center-Right
+- 0.66 to 0.85: Right
+- 0.86 to 1.00: Far-Right
+
+INSTRUCTIONS:
+Assign a precise decimal value based on the severity of the bias. For example, a moderately right-wing article might be 0.72, while an extreme left-wing article might be 0.05.
 
 STRICT OUTPUT RULES:
-You must respond ONLY with a valid, parsable JSON object. Do NOT include markdown formatting, code blocks (like ```json), explanations, or any trailing text. 
+You must respond ONLY with a valid, parsable JSON object. Do NOT include markdown formatting, code blocks, explanations, or any trailing text. 
 
 EXAMPLE OUTPUT:
-{"sentiment": "negative", "ideological_leaning": "right", "establishment_stance": "anti-government", "primary_fallacy": "Επίκληση στον Φόβο"}
+{"bias": 0.72}
 """
 
 model = GenerativeModel(
@@ -31,15 +36,30 @@ model = GenerativeModel(
     system_instruction=[system_prompt] # <--- It goes here in Vertex!
 )
 
-with open('datasets/final_unlabeled_dataset.json', 'r') as f:
+with open('datasets/final_unlabeled_dataset.json', 'r', encoding='utf-8') as f:
     unlabeled_dataset = json.load(f)
     
-test_articles = unlabeled_dataset[:50]
+test_articles = unlabeled_dataset[:3000]
 
 # 4. The Distillation Loop
-labeled_dataset = []
+OUTPUT_FILE = 'datasets/labeled_dataset.jsonl'
+processed_titles = set()
 
-for item in test_articles:
+# Load existing progress if the file exists
+if os.path.exists(OUTPUT_FILE):
+    with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+        for line in f:
+            try:
+                item = json.loads(line)
+                processed_titles.add(item.get("title"))
+            except json.JSONDecodeError:
+                continue
+    print(f"Resuming: {len(processed_titles)} articles already labeled.")
+
+# Filter out articles that have already been processed
+test_articles = [item for item in test_articles if item.get("title") not in processed_titles]
+
+for i, item in enumerate(test_articles, 1):
     title = item.get("title", "")
     text = item.get("text", "")
     article_content = f"ΤΙΤΛΟΣ: {title}\nΚΕΙΜΕΝΟ: {text}"
@@ -59,18 +79,23 @@ for item in test_articles:
             
             parsed_json = json.loads(response.text) 
             item["ai_labels"] = parsed_json
-            labeled_dataset.append(item)
+            
+            # Append each item immediately to the .jsonl file
+            with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(item, ensure_ascii=False) + '\n')
             
             print(f"Success! Labeled: {title[:30]}...")
             success = True # Breaks the while loop
-            print(f"AI Labels for '{title[:30]}': {parsed_json}")
-            time.sleep(1)  # Increased base sleep to 5 seconds (12 RPM)
+            
+            if i % 10 == 0:
+                print(f"--- Progress: {i} new items labeled this session ---")
+
+            time.sleep(1)  # 1 second sleep (approx 60 RPM, adjust if hitting quotas)
             
         except Exception as e:
             print(f"Error: {e}")
             time.sleep(10) # Simple backoff
 
-with open('datasets/labeled_dataset.json', 'w', encoding='utf-8') as f:
-    json.dump(labeled_dataset, f, ensure_ascii=False, indent=2)
+print("Distillation complete. Dataset saved to .jsonl!")
 
 print("Distillation complete. Dataset saved!")

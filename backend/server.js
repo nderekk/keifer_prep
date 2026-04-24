@@ -63,7 +63,7 @@ function runProcess(command, args, workingDirectory) {
 }
 
 // Schedule to run at minute 0 of every hour (e.g., 1:00, 2:00, 3:00)
-cron.schedule('0 * * * *', async () => {
+cron.schedule('45 * * * *', async () => {
     console.log('Initiating hourly scraper pipeline...');
     
     // Path goes up one level from 'backend' into 'live_scraper'
@@ -79,6 +79,10 @@ cron.schedule('0 * * * *', async () => {
         await runProcess('python', ['live_cleaner.py'], scraperDir);
 
         console.log('Pipeline finished! kafka_feed.jsonl is updated and ready.');
+
+        console.log('Step 3 : Sending to kafka');
+        await runProcess('python',['producer.py'],__dirname);
+        
     } catch (error) {
         console.error('Pipeline failed during execution:', error);
     }

@@ -14,7 +14,6 @@ const scrapedArticles = [
     title: "New Economic Policy Sparks Debate", 
     source: "The Daily Post", 
     polLean: "Center", polScore: 50, 
-    econLean: "Regulated", econScore: 75,
     reasoning: "The article presents a balanced view on the political spectrum, but heavily favors state-interventionist economic policies. It cites historical successes of regulation without addressing market-driven counterarguments." 
   },
   { 
@@ -22,7 +21,6 @@ const scrapedArticles = [
     title: "Tech Giants Face Stricter Regulations", 
     source: "Tech Insider", 
     polLean: "Left", polScore: 20, 
-    econLean: "Mixed", econScore: 50,
     reasoning: "Strong reliance on progressive talking points regarding corporate monopolies. However, it provides equal weight to both capitalist innovation and socialist regulatory frameworks." 
   },
   { 
@@ -30,7 +28,6 @@ const scrapedArticles = [
     title: "Markets Rally After Tax Cuts", 
     source: "Market Watch", 
     polLean: "Right", polScore: 85, 
-    econLean: "Free Market", econScore: 15,
     reasoning: "Omits negative economic forecasts and heavily utilizes emotive language to praise supply-side economic theories. Demonstrates clear alignment with conservative fiscal policies." 
   },
 ]
@@ -50,7 +47,6 @@ export default function App() {
         title: "Custom URL Analysis: Policy Review", 
         source: "External URL",
         polLean: "Right", polScore: 80, 
-        econLean: "Free Market", econScore: 20,
         reasoning: "The article uses highly emotive language and omits counter-arguments regarding the recent policy changes. Strong free-market economic lean detected by the agent." 
       })
       setIsAnalyzing(false)
@@ -179,26 +175,6 @@ export default function App() {
                         <span>Far Left</span>
                         <span>Center</span>
                         <span>Far Right</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Economic Meter */}
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="font-bold text-slate-800 flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-slate-400"/> Economic Lean
-                      </span>
-                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
-                        {activeArticle?.econLean}
-                      </Badge>
-                    </div>
-                    <div className="relative pt-1">
-                      <Progress value={activeArticle?.econScore} className="h-2.5 bg-slate-100 [&>div]:bg-slate-800" />
-                      <div className="flex mt-2 items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        <span>Free Market</span>
-                        <span>Mixed</span>
-                        <span>Regulated</span>
                       </div>
                     </div>
                   </div>

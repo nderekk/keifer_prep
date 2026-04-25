@@ -31,14 +31,34 @@ MongoClient.connect(uri)
 
 app.get('/api/articles', async (req, res) => {
     try {
-        // Fetch articles and project out the _id field
-        const articles = await collection.find({}, { projection: { _id: 0 } }).toArray();
-        res.json(articles);
+        const rawArticles = await collection.find({}, { projection: { _id: 0 } }).toArray();
+        
+        const formattedArticles = rawArticles.map(doc => {
+            const rawBias = doc.ai_labels?.bias || 0.5;
+            const percentageScore = rawBias * 100;
+            
+            let calculatedLean = "Center";
+            if (rawBias < 0.4) calculatedLean = "Left";
+            if (rawBias > 0.6) calculatedLean = "Right";
+
+            return {
+                title: doc.title || "No Title",
+                source: doc.source || "Unknown Source",
+                reasoning: doc.ai_labels?.reasoning || "Analysis pending...",
+                polLean: calculatedLean,
+                polScore: percentageScore
+                // econLean and econScore have been completely removed!
+            };
+        });
+
+        res.json(formattedArticles);
+        
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch articles' });
     }
 });
+
 
 // ==========================================
 // --- SEQUENTIAL SCRAPER PIPELINE LOGIC ---

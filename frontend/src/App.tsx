@@ -7,6 +7,22 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { ShieldCheck, BrainCircuit, Activity, Scale, Search, FileText } from "lucide-react"
 
+const getPolLeanBadgeColor = (lean: string) => {
+  switch (lean) {
+    case 'Left': return 'bg-red-100 text-red-700 border-red-200' // Red
+    case 'Right': return 'bg-blue-100 text-blue-700 border-blue-200' // Changed to Blue
+    default: return 'bg-slate-100 text-slate-600 border-slate-200' // Changed to Neutral Gray
+  }
+}
+
+const getPolIndicatorClass = (score: number) => {
+  // shaden progress fills from left, track is light neutral.
+  // Left: Red, Center: Gray, Right: Blue
+  if (score <= 40) return '[&>div]:bg-red-500' // Left Red
+  if (score <= 60) return '[&>div]:bg-slate-400' // Center Gray
+  return '[&>div]:bg-blue-600' // Right Blue
+}
+
 export default function App() {
   const [url, setUrl] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -16,7 +32,7 @@ export default function App() {
   // NEW: State to hold your live MongoDB feed
   const [liveArticles, setLiveArticles] = useState<any[]>([])
 
-  // NEW: Fetch the live feed when the page loads
+  // NEW: Fetch the live feed from MongoDB (via Node.js bridge) automatically
   useEffect(() => {
     const fetchLiveFeed = async () => {
       try {
@@ -31,24 +47,24 @@ export default function App() {
     }
 
     fetchLiveFeed()
-    // Refresh the feed every 10 seconds automatically!
+    // Optional: Refresh the feed every 10 seconds automatically!
     const interval = setInterval(fetchLiveFeed, 10000)
     return () => clearInterval(interval)
   }, [])
 
-  // UPGRADED: Send URL to Python Script
+  // UPGRADED: Handle both card clicks (live feed) and manual URLs
   const handleAnalyze = async (existingArticle?: any) => {
     setIsAnalyzing(true)
     setIsModalOpen(true)
     
-    // If they clicked a card from the feed, show that data instantly
+    // If they clicked a card from the live feed, just show that data instantly
     if (existingArticle) {
       setActiveArticle(existingArticle)
       setIsAnalyzing(false)
       return
     }
 
-    // If they pasted a URL, send it to Python!
+    // If they pasted a URL in the search bar, send it to the backend for manual Qwen inference
     if (url) {
       try {
         const response = await fetch('/api/analyze', {
@@ -77,15 +93,11 @@ export default function App() {
       
       {/* 1. HERO SECTION */}
       <div className="max-w-3xl mx-auto mt-20 text-center space-y-6">
-        <Badge variant="outline" className="border-indigo-200 text-indigo-700 bg-indigo-50 mb-4 py-1.5 px-4 shadow-sm flex items-center w-fit mx-auto gap-2">
-          <BrainCircuit className="w-4 h-4" />
-          Qwen LoRA Expert Agents Online
-        </Badge>
         <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900">
           Uncover the Hidden <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Bias</span>
         </h1>
         <p className="text-slate-500 text-lg md:text-xl font-medium">
-          Paste an article below or browse the live pipeline feed.
+           Paste an article below or browse the live pipeline feed.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto mt-8">
@@ -107,13 +119,13 @@ export default function App() {
         </div>
       </div>
 
-      {/* 2. LIVE FEED GRID (Now maps over liveArticles!) */}
+      {/* 2. LIVE FEED GRID (Maps over liveArticles from MongoDB!) */}
       <div className="max-w-5xl mx-auto mt-32">
         <div className="flex items-center gap-4 mb-8">
           <div className="h-px bg-slate-200 flex-grow"></div>
           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            Live Database Feed
+            Live Article Feed
           </h2>
           <div className="h-px bg-slate-200 flex-grow"></div>
         </div>
@@ -144,16 +156,17 @@ export default function App() {
         </div>
       </div>
 
-      {/* 3. THE DASHBOARD MODAL */}
+      {/* 3. THE DASHBOARD MODAL - UPGRADED wider layout, single meter, dynamic colors */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-slate-50 border-slate-200 text-slate-900 sm:max-w-3xl shadow-2xl overflow-hidden p-0">
+        {/* Wider dashboard width - professional best practice */}
+        <DialogContent className="bg-slate-50 border-slate-200 text-slate-900 sm:max-w-3xl shadow-2xl overflow-hidden p-0 h-[600px] flex flex-col">
           
           {isAnalyzing ? (
-            <div className="py-32 flex flex-col items-center justify-center space-y-6 bg-white">
+            <div className="flex-grow flex flex-col items-center justify-center space-y-6 bg-white">
               <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
               <div className="space-y-2 text-center">
                 <p className="text-slate-800 font-bold text-lg animate-pulse">Running Python AI Script...</p>
-                <p className="text-slate-500 font-medium">Please wait for Qwen inference to complete</p>
+                <p className="text-slate-500 font-medium">Orchestrating agent inference</p>
               </div>
             </div>
           ) : (
@@ -174,26 +187,30 @@ export default function App() {
                 </DialogHeader>
               </div>
               
-              {/* Modal Body - Two Column Grid */}
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50">
-                <div className="space-y-6">
-                  {/* Political Meter */}
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+              {/* Modal Body - Two Column Grid - Professional look from mockups */}
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 flex-grow">
+                
+                {/* Column 1: The Meters - PROMINE POLITICAL BIAS CARD ONLY */}
+                <div className="space-y-6 flex-grow">
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-full flex flex-col justify-center">
                     <div className="flex justify-between items-center mb-4">
                       <span className="font-bold text-slate-800 flex items-center gap-2">
                         <Scale className="w-4 h-4 text-slate-400"/> Political Lean
                       </span>
-                      <Badge className={
-                        activeArticle?.polLean === 'Left' ? 'bg-blue-100 text-blue-700 border-blue-200' : 
-                        activeArticle?.polLean === 'Right' ? 'bg-red-100 text-red-700 border-red-200' : 
-                        'bg-purple-100 text-purple-700 border-purple-200'
-                      }>
+                      {/* Dynamic Badge Color logic applied below */}
+                      <Badge className={getPolLeanBadgeColor(activeArticle?.polLean)}>
                         {activeArticle?.polLean}
                       </Badge>
                     </div>
                     <div className="relative pt-1">
-                      <Progress value={activeArticle?.polScore} className="h-2.5 bg-slate-100 [&>div]:bg-slate-800" />
-                      <div className="flex mt-2 items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                      {/* Dynamic Progress Indicator background applied below via helper logic. 
+                          Track is static light neutral bg-slate-100.
+                          Indicator dynamically Left Red, Center Purple, Right Dark Slate/Blue based on score */}
+                      <Progress 
+                        value={activeArticle?.polScore} 
+                        className={`h-3 bg-slate-100 ${getPolIndicatorClass(activeArticle?.polScore)}`}
+                      />
+                      <div className="flex mt-3 items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                         <span>Far Left</span>
                         <span>Center</span>
                         <span>Far Right</span>
@@ -202,7 +219,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Reasoning Log */}
+                {/* Column 2: Reasoning Log - Keep as professional best practice */}
                 <Card className="bg-white border-slate-200 shadow-sm h-full flex flex-col">
                   <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
                     <CardTitle className="text-xs text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
@@ -214,6 +231,7 @@ export default function App() {
                     {activeArticle?.reasoning}
                   </CardContent>
                 </Card>
+
               </div>
             </>
           )}

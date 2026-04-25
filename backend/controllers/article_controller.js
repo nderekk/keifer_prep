@@ -1,4 +1,4 @@
-const article = require('../models/article_model');
+const article = require('../models/articles_model');
 
 exports.getArticles = async (req, res) => {
     try {
@@ -12,10 +12,11 @@ exports.getArticles = async (req, res) => {
 exports.createArticle = async (req, res) => {
     const newArticle = new article({
         source: req.body.source,
+        url: req.body.url,
         title: req.body.title,
         content: req.body.content,
         date: req.body.date,
-        bias: req.body.bias
+        ai_labels: req.body.ai_labels
     });
     try {
         const savedArticle = await newArticle.save();

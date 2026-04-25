@@ -1,15 +1,16 @@
 const mongoose = require('mongoose');
 
 const articlesSchema = new mongoose.Schema({
-  source: {
-    id: String,
-    name: String
-  },
+  source: String,
   url: String,
   title: String,
   content: String,
   date: Date,
-  bias: String,
+  ai_labels: {
+    reasoning: String,
+    primary_entities: [String],
+    bias: Number
+  }
 });
 
 

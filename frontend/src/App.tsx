@@ -5,22 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ShieldCheck, BrainCircuit, Activity, Scale, Search, FileText } from "lucide-react"
+// NEW: Imported 'Orbit' for the clean vector logo symbol
+import { ShieldCheck, BrainCircuit, Activity, Scale, Search, FileText, Orbit } from "lucide-react"
 
 const getPolLeanBadgeColor = (lean: string) => {
   switch (lean) {
-    case 'Left': return 'bg-red-100 text-red-700 border-red-200' // Red
-    case 'Right': return 'bg-blue-100 text-blue-700 border-blue-200' // Changed to Blue
-    default: return 'bg-slate-100 text-slate-600 border-slate-200' // Changed to Neutral Gray
+    case 'Left': return 'bg-red-100 text-red-700 border-red-200' 
+    case 'Right': return 'bg-blue-100 text-blue-700 border-blue-200' 
+    default: return 'bg-slate-100 text-slate-600 border-slate-200' 
   }
 }
 
 const getPolIndicatorClass = (score: number) => {
-  // shaden progress fills from left, track is light neutral.
-  // Left: Red, Center: Gray, Right: Blue
-  if (score <= 40) return '[&>div]:bg-red-500' // Left Red
-  if (score <= 60) return '[&>div]:bg-slate-400' // Center Gray
-  return '[&>div]:bg-blue-600' // Right Blue
+  if (score <= 40) return '[&>div]:bg-red-500' 
+  if (score <= 60) return '[&>div]:bg-slate-400' 
+  return '[&>div]:bg-blue-600' 
 }
 
 export default function App() {
@@ -29,10 +28,8 @@ export default function App() {
   const [activeArticle, setActiveArticle] = useState<any>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   
-  // NEW: State to hold your live MongoDB feed
   const [liveArticles, setLiveArticles] = useState<any[]>([])
 
-  // NEW: Fetch the live feed from MongoDB (via Node.js bridge) automatically
   useEffect(() => {
     const fetchLiveFeed = async () => {
       try {
@@ -47,24 +44,20 @@ export default function App() {
     }
 
     fetchLiveFeed()
-    // Optional: Refresh the feed every 10 seconds automatically!
     const interval = setInterval(fetchLiveFeed, 10000)
     return () => clearInterval(interval)
   }, [])
 
-  // UPGRADED: Handle both card clicks (live feed) and manual URLs
   const handleAnalyze = async (existingArticle?: any) => {
     setIsAnalyzing(true)
     setIsModalOpen(true)
     
-    // If they clicked a card from the live feed, just show that data instantly
     if (existingArticle) {
       setActiveArticle(existingArticle)
       setIsAnalyzing(false)
       return
     }
 
-    // If they pasted a URL in the search bar, send it to the backend for manual Qwen inference
     if (url) {
       try {
         const response = await fetch('/api/analyze', {
@@ -89,8 +82,26 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen text-slate-900 p-8 font-sans selection:bg-red-100">
+    <div className="min-h-screen text-slate-900 p-8 font-sans selection:bg-red-100 relative">
       
+      {/* PURE CSS BRANDING HEADER - Clean, professional, scalable */}
+      <div className="absolute top-6 left-6 flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity select-none cursor-default">
+        {/* Core Ring Symbol */}
+        <div className="relative flex items-center justify-center w-10 h-10 rounded-full border border-slate-300 bg-white/50 shadow-sm backdrop-blur-sm">
+          <Orbit className="w-5 h-5 text-slate-500" strokeWidth={1.5} />
+        </div>
+        
+        {/* Typographic Logo */}
+        <div className="flex flex-col justify-center">
+          <span className="text-xl font-extrabold tracking-tight text-slate-700 leading-none">
+            BigO <span className="text-indigo-600/80">No</span>
+          </span>
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">
+            Powered By
+          </span>
+        </div>
+      </div>
+
       {/* 1. HERO SECTION */}
       <div className="max-w-3xl mx-auto mt-20 text-center space-y-6">
         <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900">
@@ -119,7 +130,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* 2. LIVE FEED GRID (Maps over liveArticles from MongoDB!) */}
+      {/* 2. LIVE FEED GRID */}
       <div className="max-w-5xl mx-auto mt-32">
         <div className="flex items-center gap-4 mb-8">
           <div className="h-px bg-slate-200 flex-grow"></div>
@@ -143,7 +154,6 @@ export default function App() {
                     <Badge variant="outline" className="text-slate-500 border-slate-200 bg-slate-50">
                       {article.source}
                     </Badge>
-                    {/* Subtle Mini Meter */}
                     <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden opacity-60 group-hover:opacity-100 transition-opacity">
                       <div 
                         className={`h-full ${article.polScore <= 40 ? 'bg-red-500' : article.polScore <= 60 ? 'bg-slate-400' : 'bg-blue-600'}`}
@@ -165,9 +175,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* 3. THE DASHBOARD MODAL - UPGRADED wider layout, single meter, dynamic colors */}
+      {/* 3. THE DASHBOARD MODAL */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        {/* Wider dashboard width - professional best practice */}
         <DialogContent className="bg-slate-50 border-slate-200 text-slate-900 sm:max-w-3xl shadow-2xl overflow-hidden p-0 h-[600px] flex flex-col">
           
           {isAnalyzing ? (
@@ -180,7 +189,6 @@ export default function App() {
             </div>
           ) : (
             <>
-              {/* Modal Header */}
               <div className="bg-white border-b border-slate-200 px-6 py-6">
                 <DialogHeader>
                   <div className="flex items-center gap-2 mb-2">
@@ -215,25 +223,18 @@ export default function App() {
                 </DialogHeader>
               </div>
               
-              {/* Modal Body - Two Column Grid - Professional look from mockups */}
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 flex-grow">
-                
-                {/* Column 1: The Meters - PROMINE POLITICAL BIAS CARD ONLY */}
                 <div className="space-y-6 flex-grow">
                   <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-full flex flex-col justify-center">
                     <div className="flex justify-between items-center mb-4">
                       <span className="font-bold text-slate-800 flex items-center gap-2">
                         <Scale className="w-4 h-4 text-slate-400"/> Political Lean
                       </span>
-                      {/* Dynamic Badge Color logic applied below */}
                       <Badge className={getPolLeanBadgeColor(activeArticle?.polLean)}>
                         {activeArticle?.polLean}
                       </Badge>
                     </div>
                     <div className="relative pt-1">
-                      {/* Dynamic Progress Indicator background applied below via helper logic. 
-                          Track is static light neutral bg-slate-100.
-                          Indicator dynamically Left Red, Center Purple, Right Dark Slate/Blue based on score */}
                       <Progress 
                         value={activeArticle?.polScore} 
                         className={`h-3 bg-slate-100 ${getPolIndicatorClass(activeArticle?.polScore)}`}
@@ -247,7 +248,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Column 2: Reasoning Log - Keep as professional best practice */}
                 <Card className="bg-white border-slate-200 shadow-sm h-full flex flex-col">
                   <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
                     <CardTitle className="text-xs text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
@@ -259,7 +259,6 @@ export default function App() {
                     {activeArticle?.reasoning}
                   </CardContent>
                 </Card>
-
               </div>
             </>
           )}

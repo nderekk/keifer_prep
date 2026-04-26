@@ -135,13 +135,22 @@ export default function App() {
             liveArticles.map((article, index) => (
               <Card 
                 key={index} 
-                className="bg-white border-slate-200 shadow-sm cursor-pointer hover:border-red-300 hover:shadow-md transition-all group"
+                className="bg-white/70 border-slate-200 shadow-sm cursor-pointer hover:border-red-300 hover:bg-white hover:shadow-md transition-all group backdrop-blur-sm"
                 onClick={() => handleAnalyze(article)}
               >
                 <CardHeader>
-                  <Badge variant="outline" className="w-fit mb-3 text-slate-500 border-slate-200 bg-slate-50">
-                    {article.source}
-                  </Badge>
+                  <div className="flex justify-between items-center mb-3">
+                    <Badge variant="outline" className="text-slate-500 border-slate-200 bg-slate-50">
+                      {article.source}
+                    </Badge>
+                    {/* Subtle Mini Meter */}
+                    <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden opacity-60 group-hover:opacity-100 transition-opacity">
+                      <div 
+                        className={`h-full ${article.polScore <= 40 ? 'bg-red-500' : article.polScore <= 60 ? 'bg-slate-400' : 'bg-blue-600'}`}
+                        style={{ width: `${article.polScore}%` }}
+                      />
+                    </div>
+                  </div>
                   <CardTitle className="text-slate-800 group-hover:text-red-600 transition-colors leading-snug">
                     {article.title}
                   </CardTitle>

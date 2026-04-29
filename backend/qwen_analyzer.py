@@ -54,17 +54,33 @@ async def scrape_with_crawl4ai(url):
     try:
         result = await _crawler.arun(url=url, config=_run_config)
         raw_markdown = getattr(result, 'fit_markdown', result.markdown)
+        
         if not raw_markdown:
-            return None, "Crawl4AI connected, but found no text."
-        return purify_markdown(raw_markdown)[:4000], None
+            return None, None, "Crawl4AI connected, but found no text."
+
+        # 1. Grab the exact HTML title directly from Crawl4AI's metadata!
+        page_title = ""
+        if hasattr(result, 'metadata') and isinstance(result.metadata, dict):
+            page_title = result.metadata.get('title', '')
+        
+        # 2. Fallback: just grab the very first line of the markdown before it gets chopped
+        if not page_title:
+            page_title = raw_markdown.strip().split('\n')[0].replace('#', '').strip()
+
+        clean_text = purify_markdown(raw_markdown)[:4000]
+        
+        # We now return 3 things: text, title, error
+        return clean_text, page_title, None 
+        
     except Exception as e:
-        return None, f"Crawl4AI failed: {str(e)}"
+        return None, None, f"Crawl4AI failed: {str(e)}"
 
 # ==========================================
 # --- ANALYSIS LOGIC ---
 # ==========================================
 async def analyze_article(url):
-    scraped_text, error = await scrape_with_crawl4ai(url)
+    # Unpack the 3 variables (including our new real_title)
+    scraped_text, real_title, error = await scrape_with_crawl4ai(url)
 
     if error or not scraped_text:
         return {"title": "Scrape Failed", "polLean": "Center", "polScore": 50, "reasoning": error, "tags": []}
@@ -80,8 +96,11 @@ async def analyze_article(url):
     elif bias_float >= 0.66: pol_lean = "Right"
     else: pol_lean = "Center"
 
+    # USE THE REAL TITLE! (Fallback to AI title, then fallback to URL)
+    final_title = real_title or ai_data.get("title") or f"Analysis of {url[:25]}..."
+
     return {
-        "title": ai_data.get("title", f"Analysis of {url[:25]}..."),
+        "title": final_title,
         "polLean": pol_lean,
         "polScore": pol_score_int,
         "reasoning": ai_data.get("reasoning", "Error generating reasoning."),

@@ -113,24 +113,12 @@ const getPolIndicatorClass = (score: number) => {
 const AnalysisModal = ({ isOpen, onClose, isAnalyzing, activeArticle }: any) => {
   const { lang } = useContext(LanguageContext);
   const text = t[lang];
-  const reasoningRef = React.useRef<HTMLDivElement>(null);
-
-  // Auto-scroll to reasoning when modal opens and analysis is done
-  React.useEffect(() => {
-    if (isOpen && !isAnalyzing && reasoningRef.current) {
-      // Small delay to ensure layout is ready
-      const timer = setTimeout(() => {
-        reasoningRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, isAnalyzing]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-50 border-slate-200 text-slate-900 sm:max-w-3xl shadow-2xl overflow-hidden p-0 h-[85vh] sm:h-[600px] flex flex-col">
+      <DialogContent className="bg-slate-50 border-slate-200 text-slate-900 sm:max-w-3xl shadow-2xl overflow-hidden p-0 h-auto sm:h-[600px] flex flex-col">
         {isAnalyzing ? (
-          <div className="flex-grow flex flex-col items-center justify-center space-y-6 bg-white">
+          <div className="flex-grow flex flex-col items-center justify-center space-y-6 bg-white min-h-[400px]">
             <div className="w-12 h-12 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin"></div>
             <div className="space-y-2 text-center">
               <p className="text-slate-800 font-bold text-lg animate-pulse">{text.runningAI}</p>
@@ -170,7 +158,7 @@ const AnalysisModal = ({ isOpen, onClose, isAnalyzing, activeArticle }: any) => 
               </DialogHeader>
             </div>
             
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 overflow-y-auto flex-grow scroll-smooth">
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 flex-grow overflow-hidden">
               <div className="space-y-6">
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-full flex flex-col justify-center min-h-[160px]">
                   <div className="flex justify-between items-center mb-4">
@@ -190,13 +178,13 @@ const AnalysisModal = ({ isOpen, onClose, isAnalyzing, activeArticle }: any) => 
                 </div>
               </div>
 
-              <Card ref={reasoningRef} className="bg-white border-slate-200 shadow-sm h-full flex flex-col min-h-[300px]">
-                <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <Card className="bg-white border-slate-200 shadow-sm flex flex-col h-[350px] md:h-full">
+                <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50 shrink-0">
                   <CardTitle className="text-xs text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
                     <FileText className="w-4 h-4" /> {text.agentLog}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-4 text-slate-700 text-sm leading-relaxed font-medium flex-grow">
+                <CardContent className="pt-4 text-slate-700 text-sm leading-relaxed font-medium overflow-y-auto flex-grow custom-scrollbar">
                   {/* TRANSLATED REASONING */}
                   {getLocalizedText(activeArticle?.reasoning, lang)}
                 </CardContent>

@@ -10,10 +10,10 @@ export default defineConfig({
     },
   },
   server: {
-    host: true,
+    host: true,  // exposes on 0.0.0.0 so LAN devices can connect
     proxy: {
       '/api': {
-        target: 'http://localhost:5001', // Points to your Node.js backend
+        target: 'http://localhost:5000', // Points to your Node.js backend
         changeOrigin: true,
       }
     }

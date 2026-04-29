@@ -6,7 +6,7 @@ const { MongoClient } = require('mongodb');
 // --- NEW SCRAPER DEPENDENCIES ---
 const cron = require('node-cron');
 // Notice I added 'exec' here so we can run the Fast Lane script!
-const { spawn, exec } = require('child_process'); 
+const { spawn } = require('child_process');
 const path = require('path');
 const { url } = require('inspector');
 // --------------------------------
@@ -73,38 +73,34 @@ app.get('/api/articles', async (req, res) => {
 // ==========================================
 // --- ROUTE 2: THE VIP FAST LANE (ANALYZE) -
 // ==========================================
-app.post('/api/analyze', (req, res) => {
+app.post('/api/analyze', async (req, res) => {
     const targetUrl = req.body.url;
 
     if (!targetUrl) {
         return res.status(400).json({ error: "URL is required" });
     }
 
-    console.log(`[Fast Lane] React requested analysis for: ${targetUrl}`);
-    console.log(`[Fast Lane] Booting up Crawl4AI & Qwen...`);
-    
-    exec(`python qwen_analyzer.py "${targetUrl}"`, { cwd: __dirname }, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`[Fast Lane Error]: ${error.message}`);
-            return res.status(500).json({ error: 'AI processing failed' });
-        }
-        
-        try {
-            const jsonStartIndex = stdout.indexOf('{');
-            if (jsonStartIndex === -1) throw new Error("No JSON found in Python output");
-            
-            const cleanJsonString = stdout.substring(jsonStartIndex);
-            const aiResult = JSON.parse(cleanJsonString);
-            
-            console.log(`[Fast Lane] Success! Sending data back to React.`);
-            // Send the perfectly formatted data back to your dashboard!
-            res.json(aiResult);
+    console.log(`[Fast Lane] Analyzing: ${targetUrl}`);
 
-        } catch (parseError) {
-            console.error('[Fast Lane Error] Failed to parse Python output. Python printed:', stdout);
-            res.status(500).json({ error: 'Invalid data format returned from AI' });
+    try {
+        const response = await fetch('http://127.0.0.1:5002/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: targetUrl }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Analyzer returned status ${response.status}`);
         }
-    });
+
+        const aiResult = await response.json();
+        console.log(`[Fast Lane] Success!`);
+        res.json(aiResult);
+
+    } catch (error) {
+        console.error(`[Fast Lane Error]: ${error.message}`);
+        res.status(500).json({ error: 'AI processing failed. Is qwen_analyzer.py running?' });
+    }
 });
 
 
@@ -130,7 +126,7 @@ cron.schedule('45 * * * *', async () => {
 
     try {
         console.log('Step 1: Running Scrapy Spider...');
-        await runProcess('scrapy', ['runspider', 'live_news_spider.py', '-O', 'raw_news.json'], scraperDir);
+        await runProcess('scrapy', ['runspider', 'live_news_spider.py', '-O', 'raw_news.jsonl'], scraperDir);
 
         console.log('Step 2: Running Cleaner...');
         await runProcess('python', ['live_cleaner.py'], scraperDir);

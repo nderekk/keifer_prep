@@ -42,11 +42,11 @@ class LiveGreekNewsSpider(SitemapSpider):
     ]
 
     sitemap_rules = [
-        (r'protothema\.gr.*/politics/|protothema\.gr.*/economy/|protothema\.gr.*/world/|protothema\.gr.*/greece/', 'parse'),
-        (r'iefimerida\.gr.*/politiki/|iefimerida\.gr.*/oikonomia/|iefimerida\.gr.*/kosmos/|iefimerida\.gr.*/ellada/', 'parse'),
-        (r'kathimerini\.gr.*/\d+/', 'parse'),
-        (r'tanea\.gr.*/\d{4}/\d{2}/\d{2}/', 'parse'),
-        (r'tovima\.gr.*/\d{4}/\d{2}/\d{2}/', 'parse'),
+        (r'protothema\.gr.*/politics/|protothema\.gr.*/economy/|protothema\.gr', 'parse'),
+        (r'iefimerida\.gr.*/politiki/|iefimerida\.gr.*/oikonomia/|iefimerida\.gr', 'parse'),
+        (r'kathimerini\.gr.*/politics/|kathimerini\.gr.*/economy/|kathimerini\.gr', 'parse'),
+        (r'tanea\.gr.*/category/politics/|tanea\.gr.*/category/economy/|tanea\.gr', 'parse'),
+        (r'tovima\.gr.*/category/politics/|tovima\.gr.*/category/finance/|tovima\.gr', 'parse'),
     ]
 
     @classmethod

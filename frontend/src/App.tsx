@@ -336,6 +336,13 @@ const LiveFeedPage = () => {
   const [totalPages, setTotalPages] = useState(1)
   const ITEMS_PER_PAGE = 25 
 
+  // --- FILTER BAR STATE & LOGIC ---
+  const [selectedSource, setSelectedSource] = useState('All')
+  const uniqueSources = ['All', ...new Set(liveArticles.map(article => article.source).filter(Boolean))];
+  const filteredArticles = selectedSource === 'All' 
+    ? liveArticles 
+    : liveArticles.filter(article => article.source === selectedSource);
+
   useEffect(() => {
     const fetchLiveFeed = async () => {
       try {
@@ -365,9 +372,29 @@ const LiveFeedPage = () => {
         <div className="h-px bg-slate-200 flex-grow opacity-50"></div>
       </div>
 
+      {/* --- NEW FILTER BAR UI --- */}
+      {liveArticles.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          {uniqueSources.map(source => (
+            <button
+              key={source}
+              onClick={() => setSelectedSource(source)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                selectedSource === source 
+                  ? 'bg-slate-800 text-white shadow-md' 
+                  : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              {source}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {liveArticles.length > 0 ? (
-          liveArticles.map((article, index) => (
+        {/* --- USING FILTERED ARTICLES --- */}
+        {filteredArticles.length > 0 ? (
+          filteredArticles.map((article, index) => (
             <Card key={index} onClick={() => { setActiveArticle(article); setIsModalOpen(true); }} className="bg-white/80 border-slate-200 shadow-sm cursor-pointer hover:border-red-300 hover:bg-white hover:shadow-md transition-all group backdrop-blur-sm">
               <CardHeader>
                 <div className="flex justify-between items-center mb-3">
@@ -388,7 +415,7 @@ const LiveFeedPage = () => {
           ))
         ) : (
            <div className="col-span-full text-center py-20 text-slate-500 bg-white/50 backdrop-blur-sm border border-slate-200 border-dashed rounded-xl">
-             {text.waitingData}
+             {selectedSource !== 'All' ? 'No articles found for this source on this page.' : text.waitingData}
            </div>
         )}
       </div>
